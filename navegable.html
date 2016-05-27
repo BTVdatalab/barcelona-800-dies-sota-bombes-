@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mapa Interactius</title>
+  <meta charset="utf-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" type="text/css" href="leaflet-search/leaflet-search.css" />
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>
+  <link rel="stylesheet" type="text/css" href="css/styles.css" />
+  <style type="text/css">
+
+    #map{
+       width: 100%;
+       height: 100%;
+        background:white;
+    }
+
+      body{
+        margin:0px;
+          height:100%;
+          width:100%
+      }
+
+      html{
+          margin:0px;
+          height:100%;
+          width:100%
+
+      }
+
+
+
+      .leaflet-control-zoom leaflet-bar leaflet-control{
+          border-radius:0px;
+      }
+
+      .leaflet-bottom .leaflet-control-scale {
+          opacity: 1;
+      }
+
+      #down{
+          position:absolute;
+          bottom:10px;
+          left:10px;
+          background:white;
+          box-shadow: 0px 0px 4px gray;
+          /*border:1px gray solid;*/
+          margin:white;
+          width:376px;
+          font-family: "sans-serif", "arial";
+          font-size:12px;
+          padding:5px;
+      }
+      #down a{
+          text-decoration:none;
+          color:black;
+          display:block;
+
+      }
+
+      .rc{
+          width:13px;
+          margin-right:5px;
+      }
+
+  </style>
+
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+  <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?v=3&sensor=false"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?v=3&libraries=places&sensor=false"></script>
+  <script src="leaflet-search/leaflet-search.js" type="text/javascript"></script>
+  <script src="javascript/refugisDestacats.js" type="text/javascript"></script>
+  <script src="javascript/refugis.js" type="text/javascript"></script>
+  <script src="javascript/bombesMultiTotes.js" type="text/javascript"></script>
+  <script src="javascript/retallBcn.js" type="text/javascript"></script>
+  <script>
+
+    $(document).ready(
+      function () {
+      var southWest = L.latLng(41.330962, 2.074388),
+          northEast = L.latLng( 41.482006, 2.272672),
+          bounds = L.latLngBounds(southWest, northEast);
+
+      window.map = L.map('map', {
+          attributionControl:false,
+          zoomControl: false,
+          maxBounds: bounds,
+          maxZoom: 17,
+          minZoom: 12
+        }).setView([41.386837, 2.169708], 14);//Per possar la orientacio inicial
+
+
+      var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      });
+
+      var martorell =L.tileLayer('http://www.300000kms.net/_btv/martorell/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        minZoom:12,
+        tms: false,
+        attribution: '<a target="_blank" href="http://www.300000kms.net">300.000Km/s</a>'
+      });//carrega de papa
+      var OpenStreetMap_BlackAndWhite = L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      });
+
+
+      // Tallat------------------------
+      L.Mask = L.Polygon.extend({
+          options: {
+          stroke: false,
+          color: '#DDD',
+          fillOpacity: 1,
+          clickable: false,
+
+          outerBounds: new L.LatLngBounds([-90, -120], [90, 120])
+        },
+
+        initialize: function (latLngs, options) {
+
+          var outerBoundsLatLngs = [
+            this.options.outerBounds.getSouthWest(),
+            this.options.outerBounds.getNorthWest(),
+            this.options.outerBounds.getNorthEast(),
+            this.options.outerBounds.getSouthEast()
+          ];
+              L.Polygon.prototype.initialize.call(this, [outerBoundsLatLngs, latLngs], options);
+        },
+
+      });
+      L.mask = function (latLngs, options) {
+        return new L.Mask(latLngs, options);
+      };
+
+      var coordinates = bcnRetall .features[0].geometry.coordinates[0];
+      var latLngs = [];
+      for (i=0; i<coordinates.length; i++) {
+          latLngs.push(new L.LatLng(coordinates[i][1], coordinates[i][0]));
+      }
+      window.maskRetall=L.mask(latLngs);
+
+
+
+      //-------------------------------
+
+      var baseMaps = {
+        "Antic": martorell,
+        "Mapa": OpenStreetMap_BlackAndWhite,
+        "Satèl·lit": Esri_WorldImagery
+      };
+
+      L.control.scale().addTo(map);
+      L.control.zoom().addTo(map);
+      maskRetall.addTo(map);
+      martorell.addTo(map);
+      //L.mask(latLngs).addTo(map);
+
+      function positionSearch(latlng, title, map) {
+	//map.fitBounds( latlng.layer.getBounds() );
+		map.setView(latlng, 16); // access the zoom
+	}
+/*
+    //SEARCH
+      var searcherControl =new L.Control.Search({
+      url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
+      jsonpParam: 'json_callback',
+      propertyName: 'display_name',
+      propertyLoc: ['lat','lon'],
+      moveToLocation: positionSearch,
+      circleLocation: false,
+      markerLocation: true,
+      autoType: false,
+      autoCollapse: true,
+      minLength: 2
+    });
+      map.addControl( searcherControl);
+*/
+    //Search google
+
+
+    var input = document.getElementById("searchBox");
+    var searchBox = new google.maps.places.SearchBox(input);
+
+    searchBox.addListener('places_changed', function() {
+      var places = searchBox.getPlaces();
+
+      if (places.length == 0) {
+        return;
+      }
+
+      var group = L.featureGroup();
+
+      places.forEach(function(place) {
+
+        // Create a marker for each place.
+        var marker = L.marker([
+          place.geometry.location.lat(),
+          place.geometry.location.lng()
+        ]);
+        group.addLayer(marker);
+      });
+
+      group.addTo(map);
+      map.fitBounds(group.getBounds());
+
+    });
+
+
+
+      window.holeBombIcon = L.icon({
+        iconUrl: 'img/hole.png',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        popupAnchor: [0, -28]
+      });
+      window.refugiDestacatIcon = L.icon({
+        iconUrl: 'img/tunnel.png',
+        iconSize: [15, 15],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -28]
+      });
+      window.refugiIcon = L.icon({
+        iconUrl: 'img/tunnelBlack.png',
+        iconSize: [15, 15],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -28]
+      });
+
+      function onEachFeatureBomb(feature, layer) {
+        var popupContent = "Data: "+feature.properties.data+"<br>Hora: "+feature.properties.hora+"";
+        var customOptions =
+            {
+            'maxWidth': '500',
+            'className' : 'custom'
+            };
+        layer.bindPopup(popupContent,customOptions);
+      }
+      function onEachFeature(feature, layer) {
+
+          var popupContent = "";
+          popupContent = feature.properties.popUpInfo;
+          var customOptions =
+              {
+              'maxWidth': '250',
+              'className' : 'custom'
+              };
+          layer.bindPopup(popupContent,customOptions);
+
+      }
+      var refugiLay = L.layerGroup();
+      L.geoJson(refugiDestacat, {
+
+        style: function (feature) {
+          return feature.properties && feature.properties.style;
+        },
+
+        onEachFeature: onEachFeature,
+
+        pointToLayer: function (feature, latlng) {
+
+                var markerBombs= L.marker(latlng, {
+                  icon: refugiDestacatIcon
+
+
+                });
+              return markerBombs;
+        }
+
+    }).addTo(refugiLay);
+
+
+      L.geoJson(refugi, {
+
+        style: function (feature) {
+          return feature.properties && feature.properties.style;
+        },
+
+        pointToLayer: function (feature, latlng) {
+                var markerBombs= L.marker(latlng, {
+                  icon: refugiIcon
+
+
+                });
+
+              return markerBombs;
+        }
+
+    }).addTo(refugiLay);
+
+      var bombLay = L.layerGroup();
+      var bombesPunts = L.geoJson(bombesMulti, {
+
+        style: function (feature) {
+          return feature.properties && feature.properties.style;
+        },
+
+        onEachFeature: onEachFeatureBomb,
+
+        pointToLayer: function (feature, latlng) {
+              var markerBombs= L.marker(latlng, {
+                icon: holeBombIcon
+
+
+              });
+              return markerBombs;
+        }
+
+      }).addTo(bombLay);
+
+      var overlayMaps = {
+        "Refugis": refugiLay,
+        "Bombes" : bombLay
+      };
+      window.controlLay= L.control.layers(baseMaps, overlayMaps);
+
+    controlLay.addTo(map);
+    map.on('baselayerchange', function(e) {
+        if (e.name === "Antic") {
+          maskRetall.addTo(map);
+        }else{
+          map.removeLayer(maskRetall);
+        }
+        document.getElementById("popupTuto").style.display = "none";
+    });
+    map.on('overlayadd', function(e) {
+        document.getElementById("popupTuto").style.display = "none";
+    });
+    map.on('overlayremove', function(e) {
+        document.getElementById("popupTuto").style.display = "none";
+    });
+
+
+
+
+
+
+
+
+	});
+
+
+
+
+    </script>
+
+</head>
+
+<body class="navegable">
+
+  <div  style="position: relative;" id="map"></div>
+  <div  id="icone" style="position: absolute;">
+    <a  href="../../ca/barcelona-800-dies-sota-bombes/"  ><img src="img/btv.png" ></a>
+
+  </div>
+  <div id="searchIcone" ><div id="searchIconeIn"></div></div>
+  <div id="searchBoxDiv">
+      <input id="searchBox">
+  </div>
+  <div id="popupTuto">
+      <div style="margin-top:20px">Tria quin plànol vols.</div>
+
+
+</div>
+</body>
+
+</html>

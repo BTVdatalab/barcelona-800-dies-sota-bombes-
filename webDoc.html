@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Barcelona sota les bombes</title>
+  <meta charset="utf-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
+  <link rel="stylesheet" type="text/css" href="css/styles.css" />
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>
+
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+  <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
+  <script src="http://popcornjs.org/code/dist/popcorn-complete.min.js"></script>
+  <script src="leaflet.bouncemarker-master/bouncemarker.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+  <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+  <script src="aishek-jquery-animateNumber-5f436e7/jquery.animateNumber.min.js"></script>
+
+  <script src="javascript/refugis.js" type="text/javascript"></script>
+  <script src="javascript/bombesMultiTotes.js" type="text/javascript"></script>
+  <script src="javascript/bombesMulti.js" type="text/javascript"></script>
+
+  <script src="javascript/retallBcn.js" type="text/javascript"></script>
+  <script>
+  window.totesBombes= [dia1937213, dia1937529, dia1937101, dia193811, dia1938125, dia1938130, dia193835, dia1938317A, dia1938317B, dia1938318, dia193864, dia1938719, dia1938819, dia1938924, dia1938104, dia19381021, dia19381231, dia1939121, dia1939124];
+    $(document).ready(
+
+      function () {
+
+
+
+
+      window.map = L.map('map', {
+          attributionControl:false,
+          zoomControl: false
+        }).setView([41.386910, 2.193483], 13);//Per possar la orientacio inicial
+
+
+      // Disable drag and zoom handlers.
+      map.dragging.disable();
+      map.touchZoom.disable();
+      map.doubleClickZoom.disable();
+      map.scrollWheelZoom.disable();
+      map.keyboard.disable();
+
+      // Disable tap handler, if present.
+      if (map.tap) map.tap.disable();
+      var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      });
+
+      var martorell =L.tileLayer('http://www.300000kms.net/_btv/martorell/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        minZoom:12,
+        tms: false,
+        attribution: '<a target="_blank" href="http://www.300000kms.net">300.000Km/s</a>'
+      });//carrega de papa
+      var OpenStreetMap_BlackAndWhite = L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      });
+      var baseMaps = {
+        "Antic": martorell,
+        "Actual Mapa": OpenStreetMap_BlackAndWhite,
+        "Actual Satèl·lit": Esri_WorldImagery
+      };
+
+      // Tallat------------------------
+      L.Mask = L.Polygon.extend({
+          options: {
+          stroke: false,
+          color: '#DDD',
+          fillOpacity: 1,
+          clickable: false,
+
+          outerBounds: new L.LatLngBounds([-90, -120], [90, 120])
+        },
+
+        initialize: function (latLngs, options) {
+
+          var outerBoundsLatLngs = [
+            this.options.outerBounds.getSouthWest(),
+            this.options.outerBounds.getNorthWest(),
+            this.options.outerBounds.getNorthEast(),
+            this.options.outerBounds.getSouthEast()
+          ];
+              L.Polygon.prototype.initialize.call(this, [outerBoundsLatLngs, latLngs], options);
+        },
+
+      });
+      L.mask = function (latLngs, options) {
+        return new L.Mask(latLngs, options);
+      };
+
+      var coordinates = bcnRetall .features[0].geometry.coordinates[0];
+      var latLngs = [];
+      for (i=0; i<coordinates.length; i++) {
+          latLngs.push(new L.LatLng(coordinates[i][1], coordinates[i][0]));
+      }
+      window.maskRetall=L.mask(latLngs);
+
+      map.on('baselayerchange', function(e) {
+        if (e.name === "Antic") {
+          maskRetall.addTo(map);
+        }else{
+          map.removeLayer(maskRetall);
+        }
+      });
+
+      //-------------------------------
+
+      L.control.scale().addTo(map);
+      maskRetall.addTo(map);
+
+
+    //A���adimos las capas de OpenStreetMap y Google al mapa
+
+      map.addLayer(martorell, Esri_WorldImagery);
+       //Crar icona a partir d'una foto
+      window.bombIcon = L.icon({
+        iconUrl: 'img/bomb.png',
+        iconSize: [20, 30],
+        iconAnchor: [20, 30],
+        popupAnchor: [0, -28]
+      });
+      window.expIcon = L.icon({
+        iconUrl: 'img/explosion.png',
+        iconSize: [20, 30],
+        iconAnchor: [20, 30],
+        popupAnchor: [0, -28]
+      });
+      window.holeBombIcon = L.icon({
+        iconUrl: 'img/hole.png',
+        iconSize: [20, 20],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -28]
+      });
+
+
+      function onEachFeature(feature, layer) {
+        var popupContent = "<p>I started out as a GeoJSON " +
+            feature.geometry.type + ", but now I'm a Leaflet vector!</p>";
+
+        if (feature.properties && feature.properties.popupContent) {
+          popupContent += feature.properties.popupContent;
+        }
+
+        layer.bindPopup(popupContent);
+      }
+      window.assetLayerGroup = L.layerGroup().addTo(map);
+      window.foratLayerGroup = L.layerGroup().addTo(map);
+
+
+      L.control.layers(baseMaps).addTo(map);
+
+
+
+
+
+  });
+      window.totalMorts=0;
+      function onEachFeature(feature, layer) {
+        dataActual = feature.properties.data;
+        totalMorts =feature.properties.morts_totals;
+        if (feature.properties && feature.properties.popupContent) {
+          popupContent += feature.properties.popupContent;
+        }
+
+       //layer.bindPopup(popupContent);
+      }
+      function onEachFeatureBomb(feature, layer) {
+        var popupContent = "<p>Data: " +feature.properties.data + " <br>Morts: "+feature.properties.morts+"</p>";
+        if (feature.properties && feature.properties.popupContent) {
+          popupContent += feature.properties.popupContent;
+        }
+
+       layer.bindPopup(popupContent);
+      }
+
+      function imprimir(diaBomb, posicions){
+        assetLayerGroup.clearLayers();
+        foratLayerGroup.clearLayers();
+        map.setView([posicions[diaBomb][0],posicions[diaBomb][1]], posicions[diaBomb][2]);
+        for(var i=0; i<diaBomb; i++){
+          var refuguis = L.geoJson(totesBombes[i], {
+
+            pointToLayer: function (feature, latlng) {
+              var markerBombs= L.marker(latlng, {
+                icon: holeBombIcon
+
+
+              });
+              return markerBombs;
+            },
+            onEachFeature: onEachFeature
+
+          }).addTo(foratLayerGroup);
+        }
+
+        //dadesAqui=JSON.parse(diaBomb);
+        window.dataActual;
+        setTimeout(function() {
+
+
+
+
+
+          var coorsLayer = L.geoJson(totesBombes[diaBomb], {
+
+            pointToLayer: function (feature, latlng) {
+              var markerBombs= L.marker(latlng, {
+                icon: bombIcon,
+                bounceOnAdd: true,
+                bounceOnAddOptions: {duration: 1600, height: 200}
+
+
+              });
+              return markerBombs;
+            },
+            onEachFeature: onEachFeature
+
+          }).addTo(assetLayerGroup);
+
+          document.getElementById("dataAct").innerHTML = dataActual;
+
+          setTimeout(function() {
+            coorsLayer
+            assetLayerGroup.clearLayers();
+            var coorsLayerExp = L.geoJson(totesBombes[diaBomb], {
+
+            pointToLayer: function (feature, latlng) {
+              var markerBombs= L.marker(latlng, {
+                icon: expIcon
+
+
+              });
+              return markerBombs;
+            },
+            onEachFeature: onEachFeature
+
+          }).addTo(assetLayerGroup);
+            assetLayerGroup.removeLayer(coorsLayer);
+
+            $('#total_morts').animateNumber({ number: totalMorts });
+          }, 1600);
+        }, 1500);
+
+
+      }
+
+      function simplificat(popTime, startTime, endTime, diaBomb, posicions){
+        popTime.code({
+            start: startTime,
+            end: endTime,
+            onStart: function() {
+                expandMenu();
+              document.getElementById('typewriter').innerHTML = "";
+              $( "#slider" ).slider( "value", diaBomb+1 );
+              imprimir(diaBomb, posicions);
+
+            }
+          });
+
+      }
+      //CANVIS PER PASE FRANCESC
+      function iniciVideo(popTime){
+          //TODO Zoom mobil
+        popTime.code({//INICI SENSE TEXT
+            start: 0,
+            end: 2,
+            onStart: function() {
+                hideMenu();
+
+              $( "#slider" ).slider( "value", 0 );
+              assetLayerGroup.clearLayers();
+              foratLayerGroup.clearLayers();
+              document.getElementById("total_morts").innerHTML = 0;
+              document.getElementById("dataAct").innerHTML ="";
+              map.setView([41.386910, 2.193483], 13);
+            }
+        });
+        popTime.code({//INICI SENSE TEXT
+            start: 2,
+            end: 4,
+            onStart: function() {
+                //typewrite
+                hideMenu();
+                var str = "Atenció catalans,",
+                    i = 0,
+                    isTag,
+                    text;
+
+                (function type() {
+                    text = str.slice(0, ++i);
+                    if (text === str) return;
+
+                    document.getElementById('typewriter').innerHTML = text;
+
+                    var char = text.slice(-1);
+                    if( char === '<' ) isTag = true;
+                    if( char === '>' ) isTag = false;
+
+                    if (isTag) return type();
+                    setTimeout(type, 50);
+                }());
+
+              $( "#slider" ).slider( "value", 0 );
+              assetLayerGroup.clearLayers();
+              foratLayerGroup.clearLayers();
+              document.getElementById("total_morts").innerHTML = 0;
+              document.getElementById("dataAct").innerHTML ="";
+              map.setView([41.386910, 2.193483], 13);
+            }
+          });
+          popTime.code({//INICI SENSE TEXT
+              start: 4,
+              end: 6,
+              onStart: function() {
+                  //typewrite
+                  hideMenu();
+                  var str = 'hi ha perill de <font color="red">bombardeig</font>.',
+                      i = 0,
+                      isTag,
+                      text;
+
+                  (function type() {
+                      text = str.slice(0, ++i);
+                      if (text === str) return;
+
+                      document.getElementById('typewriter').innerHTML = text;
+
+                      var char = text.slice(-1);
+                      if( char === '<' ) isTag = true;
+                      if( char === '>' ) isTag = false;
+
+                      if (isTag) return type();
+                      setTimeout(type, 50);
+                  }());
+
+                $( "#slider" ).slider( "value", 0 );
+                assetLayerGroup.clearLayers();
+                foratLayerGroup.clearLayers();
+                document.getElementById("total_morts").innerHTML = 0;
+                document.getElementById("dataAct").innerHTML ="";
+                map.setView([41.386910, 2.193483], 13);
+              }
+            });
+            popTime.code({//INICI SENSE TEXT
+                start: 6,
+                end: 10,
+                onStart: function() {
+                    //typewrite
+                    hideMenu();
+                    var str = "Aneu als vostres refugis amb calma i serenitat,",
+                        i = 0,
+                        isTag,
+                        text;
+
+                    (function type() {
+                        text = str.slice(0, ++i);
+                        if (text === str) return;
+
+                        document.getElementById('typewriter').innerHTML = text;
+
+                        var char = text.slice(-1);
+                        if( char === '<' ) isTag = true;
+                        if( char === '>' ) isTag = false;
+
+                        if (isTag) return type();
+                        setTimeout(type, 50);
+                    }());
+
+                  $( "#slider" ).slider( "value", 0 );
+                  assetLayerGroup.clearLayers();
+                  foratLayerGroup.clearLayers();
+                  document.getElementById("total_morts").innerHTML = 0;
+                  document.getElementById("dataAct").innerHTML ="";
+                  map.setView([41.386910, 2.193483], 13);
+                }
+              });
+              popTime.code({//INICI SENSE TEXT
+                  start: 10,
+                  end: 13,
+                  onStart: function() {
+                      //typewrite
+                      hideMenu();
+                      var str = "la Generalitat vetlla per vosaltres.",
+                          i = 0,
+                          isTag,
+                          text;
+
+                      (function type() {
+                          text = str.slice(0, ++i);
+                          if (text === str) return;
+
+                          document.getElementById('typewriter').innerHTML = text;
+
+                          var char = text.slice(-1);
+                          if( char === '<' ) isTag = true;
+                          if( char === '>' ) isTag = false;
+
+                          if (isTag) return type();
+                          setTimeout(type, 50);
+                      }());
+
+                    $( "#slider" ).slider( "value", 0 );
+                    assetLayerGroup.clearLayers();
+                    foratLayerGroup.clearLayers();
+                    document.getElementById("total_morts").innerHTML = 0;
+                    document.getElementById("dataAct").innerHTML ="";
+                    map.setView([41.386910, 2.193483], 13);
+                  }
+                });
+                //TODO: Despres de typewrite
+                popTime.code({//INICI SENSE TEXT
+                    start: 13,
+                    end: 17,
+                    onStart: function() {
+                        //typewrite
+                        expandMenu();
+
+                      document.getElementById('typewriter').innerHTML = "";
+
+                      $( "#slider" ).slider( "value", 0 );
+                      assetLayerGroup.clearLayers();
+                      foratLayerGroup.clearLayers();
+                      document.getElementById("total_morts").innerHTML = 0;
+                      document.getElementById("dataAct").innerHTML ="Barcelona";
+                      map.setView([41.386910, 2.193483], 13);
+                    }
+                  });
+
+
+      }
+      function finalVideo(popTime, startTime, endTime){
+          //TODO Zoom mobil
+          var w = window.innerWidth;
+          var coordFinal=[[41.386910, 2.193483], 13]
+          if (w <1024){
+              coordFinal=[[41.386910, 2.193483], 12]
+          }
+        popTime.code({
+            start: startTime,
+            end: endTime,
+            onStart: function() {
+                expandMenu();
+                document.getElementById('typewriter').innerHTML = "";
+              $( "#slider" ).slider( "value", 20 );
+              assetLayerGroup.clearLayers();
+              foratLayerGroup.clearLayers();
+              for(var i=0; i<19; i++){
+                var refuguis = L.geoJson(totesBombes[i], {
+
+                  pointToLayer: function (feature, latlng) {
+                    var markerBombs= L.marker(latlng, {
+                      icon: holeBombIcon
+
+
+                    });
+                    return markerBombs;
+                  },
+                  onEachFeature: onEachFeature
+
+                }).addTo(foratLayerGroup);
+              }
+            document.getElementById("dataAct").innerHTML =" ";
+            totalMorts = 2404;
+            $('#total_morts').animateNumber({ number: totalMorts });
+            map.setView(coordFinal[0], coordFinal[1]);
+
+            }
+          });
+
+      }
+      window.posicioCamara;
+      // ensure the web page (DOM) has loaded
+      //CANVIAT PER FRANCES
+      document.addEventListener("DOMContentLoaded", function () {
+          var w = window.innerWidth;
+          if (w <1024){//Mobil version
+            posicioMobil=[[41.401261, 2.164935, 14],
+            [41.391400, 2.175679 , 12],
+            [41.380988, 2.190232, 15],
+            [41.381389, 2.171832, 14],
+            [41.387005, 2.162374, 13],
+            [41.382920, 2.176001, 16],
+            [41.384989, 2.186641, 15],
+            [41.386427, 2.168815, 13],
+            [41.387311, 2.165387, 13],
+            [41.376432, 2.155744, 15],
+            [41.373262, 2.179177, 12],
+            [41.389382, 2.195173, 12],
+            [41.383533, 2.178464, 14],
+            [41.374110, 2.176467, 14],
+            [41.363478, 2.180995, 14],
+            [41.383053, 2.179975, 14],
+            [41.383427, 2.164977, 13],
+            [41.376459, 2.176982, 13],
+            [41.382739, 2.187638, 13]];
+            //videoPop.play();
+            posicioCamara=posicioMobil;
+        }else{//Desktop version
+
+            posicioEscriptori=[[41.399904, 2.174064, 15], [41.396346, 2.200537, 13], [41.379603, 2.190318, 15], [41.382750, 2.181187, 15],[41.388804, 2.169091, 14], [41.384248, 2.177374, 16], [41.384201, 2.192756, 15], [41.382414, 2.186571, 14], [41.387501, 2.174142, 14], [41.380807, 2.163395, 15], [41.376773, 2.195088, 13], [41.384428, 2.215000, 13], [41.382899, 2.186504, 15], [41.373616, 2.180791, 15], [41.364195, 2.189822, 15], [41.382430, 2.185886, 15], [41.381634, 2.175529, 14], [41.370943, 2.189986, 14], [41.380604, 2.194229, 14]];
+            //videoPop.play();
+            posicioCamara=posicioEscriptori;
+          }
+        window.iniciFixe= 17.0;
+        var inici= iniciFixe;
+        window.tempsEntre37=7;
+        window.tempsEntre38=7.36;
+        window.tempsEntre39=12;
+        window.finalFixe=6;
+           // Create a popcorn instance by calling the Youtube player plugin
+        var videoPop = Popcorn( "#ourvideo" );
+        $( "#slider" ).slider({
+          max:20,
+          min: 0,
+          stop: function( event, ui ) {
+             //TODO: Posar cada un a Harcode
+             var timeValue;
+
+             if (ui.value===0){
+                 timeValue=0;
+             }else if(ui.value===20){
+                 timeValue=168;
+             }else if(ui.value<4){
+                 timeValue=iniciFixe+(ui.value-1)*tempsEntre37;
+             }else if(ui.value<18){
+                 timeValue=41+ (ui.value-4)*tempsEntre38;
+             }else{
+                 timeValue=144   + tempsEntre39*(ui.value-18);
+             }
+
+            //var calcul=iniciFixe+ (ui.value - 1) * tempsEntre;
+            videoPop.currentTime(timeValue);
+
+          }
+
+        });
+        videoPop.pause();
+        window.butPause= true;
+        document.getElementById("ButtonPlay").innerHTML = "";
+        console.log("popCorn");
+        var v = document.getElementById( "ourvideo" );;
+
+        // Listen for ended event
+        v.addEventListener( "ended", function( e ) {
+
+            butPause= true;
+            //document.getElementById("ButtonPlay").innerHTML = "";
+            document.getElementById("ButtonPlay").style.backgroundPosition = "0px -7px";
+
+
+        }, false );
+
+
+        var final=inici + tempsEntre37 -0.1;
+        iniciVideo(videoPop);
+        //TODO INICIAL POPUP
+        simplificat(videoPop,inici, final, 0, posicioCamara);
+        inici=inici + tempsEntre37;
+        final= inici + tempsEntre37 -0.1;
+        simplificat(videoPop,inici, final, 1, posicioCamara);
+        inici=inici + tempsEntre37;
+        final= inici + tempsEntre37 -0.1;
+        simplificat(videoPop,inici, final, 2, posicioCamara);
+        inici=inici + tempsEntre37;
+        final= inici + tempsEntre37 -0.1;
+        simplificat(videoPop,inici, final, 3, posicioCamara);
+        inici=inici + tempsEntre37;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 4,posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 5,posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 6, posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        //17-3-1938
+        simplificat(videoPop,inici, final, 7,  posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 8, posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 9,  posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 10, posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 11, posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 12,  posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 13,  posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 14,  posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 15,  posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre38 -0.1;
+        simplificat(videoPop,inici, final, 16,  posicioCamara);
+        inici=inici + tempsEntre38;
+        final= inici + tempsEntre39 -0.1;
+        simplificat(videoPop,inici, final, 17,   posicioCamara);
+        inici=inici + tempsEntre39;
+        final= inici + tempsEntre39 -0.1;
+        simplificat(videoPop,inici, final, 18,  posicioCamara);
+        inici=inici + tempsEntre39;
+        final= inici + 6 -0.1;//6 segons a la conclusió
+        finalVideo(videoPop,inici, final+inici);
+        //TODO FINAL POPCORN
+        window.videoProperties =videoPop;
+
+
+
+
+      }, false);
+      function funcButPlay(){
+        if(butPause){
+          videoProperties.play();
+          timeoutSound();
+
+          butPause= false;
+          //document.getElementById("ButtonPlay").innerHTML = "";
+          document.getElementById("ButtonPlay").style.backgroundPosition = "-22px -7px";
+        }else{
+          videoProperties.pause();
+          butPause= true;
+          document.getElementById("soundIcon").style.opacity = 0.0;
+          //document.getElementById("ButtonPlay").innerHTML = "";
+          document.getElementById("ButtonPlay").style.backgroundPosition = "0px -7px";
+        }
+      }
+
+
+var w = window.innerWidth;
+console.log(w);
+window.mostrat=false;
+function expandMenu(){
+    if(!mostrat){
+        document.getElementById("menu").style.opacity = 0.25;
+        document.getElementById("menu").style.display = "block";
+        tTimeout = setTimeout(timeoutShow1, 80);
+        tTimeout = setTimeout(timeoutShow2, 80);
+        tTimeout = setTimeout(timeoutShow3, 80);
+    }
+    mostrat=true;
+
+  //document.getElementById("expand_bar").style.display = "none";
+}
+function timeoutShow1(){
+  document.getElementById("menu").style.opacity = 0.5;
+}
+function timeoutShow2(){
+  document.getElementById("menu").style.opacity = 0.75;
+}
+function timeoutShow3(){
+document.getElementById("menu").style.opacity = 0.9;
+}
+
+function hideMenu(){
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("menu").style.opacity = 0;
+    mostrat=false;
+    //document.getElementById("expand_bar").style.display = "block";
+}
+
+function timeoutSound(){
+        tTimeout = setTimeout(timeoutSound1, 200);
+        tTimeout = setTimeout(timeoutSound2, 300);
+        tTimeout = setTimeout(timeoutSound3, 200);
+  //document.getElementById("expand_bar").style.display = "none";
+}
+function timeoutSound1(){
+  document.getElementById("soundIcon").style.opacity = 0.75;
+}
+function timeoutSound2(){
+  document.getElementById("soundIcon").style.opacity = 0.5;
+}
+function timeoutSound3(){
+document.getElementById("soundIcon").style.opacity = 0.15;
+}
+
+
+
+
+
+
+
+
+    </script>
+
+</head>
+<body class="webdoc" >
+  <div class="typewriterContainer"><h1 id="typewriter"></h1></div>
+  <aside  id="menu">
+  <div class="menu-container">
+  <div id="title-container"><h1 class="title">Bombardeigs <strong>BCN 1937/39</strong></h1></font>
+   </div>
+   <div class="data-container"><span class="data" id="dataAct"></span></div>
+   <hr class="line"></hr>
+
+  <div  class="counter"><span id="total_morts">0 </span> victimes</div>
+  <hr class="line"></hr>
+  <div style="text-align:center">
+  <video height="270" width="auto" id="ourvideo" >
+      <source src="http://www.btv.cat/lab/datalab/recursos/bombradeigs-a-barcelona/BOMBES_DOC.m4v">
+      <source src="http://www.btv.cat/lab/datalab/recursos/bombradeigs-a-barcelona/BOMBES_DOC.webm" type="video/webm">
+      <source src="http://www.btv.cat/lab/datalab/recursos/bombradeigs-a-barcelona/BOMBES_DOC.ogv" type="video/ogg">
+  </video>
+  </div>
+   <hr class="line"></hr>
+
+</div>
+ </aside>
+  <div class="timeline-container">
+  <aside id="timeline">
+   <a onclick="funcButPlay()" id="ButtonPlay"></a>
+  <div id="slider" ></div>
+   </aside>
+ </div>
+  <div style="position: relative;" id="map"></div>
+  <div  id="icone" style="position: absolute;">
+    <a  href="../../ca/barcelona-800-dies-sota-bombes/"  ><img src="img/btv.png" ></a>
+
+  </div>
+  <div id="soundIcon"></div>
+
+  </div>
+
+</body>
+
+</html>
