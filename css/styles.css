@@ -121,6 +121,93 @@
     background: rgba(0 , 0, 0, 1);
 }
 
+#icone_ihr {
+    position: absolute;
+    top :70px;
+    left:75px;
+    width:180px;
+    opacity: 0.9;
+    filter: alpha(opacity=90);
+    padding-right: 5px;
+    /*padding-top: 5px;*/
+    background: rgba(0, 0, 0, 0.9);
+    /*width: 180px;*/
+    color:white;
+    font-family: 'Titillium Web', sans-serif;
+    font-size: 1em;
+    height: 50px;
+}
+#icone_ihr:hover {
+
+    opacity: 1.0;
+    filter: alpha(opacity=100);
+    /* For IE8 and earlier */
+    /* RGBa with 0.6 opacity */
+    background: rgba(0 , 0, 0, 1);
+}
+#icone_ihr img{
+    height:41px;
+}
+#icone_ihr a{
+    color:white;
+    font-family: 'Titillium Web', sans-serif;
+    font-size: 1.1em;
+    text-decoration:none;
+    line-height: 60%;
+}
+
+/*#icone_ihr {
+    position: absolute;
+    bottom:10px;
+    right:10px;
+    opacity: 0.9;
+    filter: alpha(opacity=90);
+    padding-right: 5px;
+    background: rgba(0, 0, 0, 0.9);
+}*/
+
+/*#icone_ihr img{
+    height:41px;
+    float:right;
+}
+#icone_ihr:hover ~ #text_ihr{
+    display:block;
+}*/
+
+/*#icone_ihr:hover {
+   opacity: 0;
+    filter: alpha(opacity=0);
+}*/
+
+
+/*#image_ihr{
+    display:block;
+}*/
+
+#text_ihr {
+    position: absolute;
+    bottom:10px;
+    right:59px;
+    opacity: 0.9;
+    filter: alpha(opacity=90);
+    padding-left: 5px;
+    /*padding-top: 5px;*/
+    background: rgba(0, 0, 0, 0.9);
+    width: 360px;
+    height:41px;
+    display:none;
+    color:white;
+    font-family: 'Titillium Web', sans-serif;
+    font-size: 0.5em;
+}
+#text_ihr img{
+    height:41px;
+    float:right;
+}
+#text_ihr:hover{
+    display:block;
+}
+
 #down{
           position:absolute;
           bottom:10px;
@@ -499,6 +586,17 @@ box-shadow: 0 1px 5px rgba(0,0,0,0.4);
     }
     #icone img{
         width:150px;
+    }
+    #icone_ihr {
+        /*width:150px;*/
+    }
+    #icone_ihr img{
+        height:34px;
+    }
+    #text_ihr {
+      width:300px;
+      height:34px;
+      right:54px;
     }
     #soundIcon{
         width: 40px;
