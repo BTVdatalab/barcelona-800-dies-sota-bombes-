@@ -580,11 +580,17 @@ box-shadow: 0 1px 5px rgba(0,0,0,0.4);
 @media screen and (max-width: 400px) {
     #popupTuto{
         right: 10px;
+        top: 81px;
     }
     #icone_ihr {
         left: 5px;
+        top:55px;
     }
     #icone {
         left: 5px;
+        top:6px;
+    }
+    .leaflet-control-layers{
+        top:20px;
     }
 }
