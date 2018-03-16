@@ -567,7 +567,7 @@ box-shadow: 0 1px 5px rgba(0,0,0,0.4);
 
 @media screen and (max-width: 449px) {
     #popupTuto{
-        right: 5px;
+        right: 10px;
     }
     #icone_ihr {
         left: 5px;
