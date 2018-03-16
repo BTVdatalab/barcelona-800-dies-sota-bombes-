@@ -563,5 +563,28 @@ box-shadow: 0 1px 5px rgba(0,0,0,0.4);
         top: 60px;
         right: 30px;
     }
+}
 
+@media screen and (max-width: 449px) {
+    #popupTuto{
+        right: 5px;
+    }
+    #icone_ihr {
+        left: 5px;
+    }
+    #icone {
+        left: 5px;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    #popupTuto{
+        right: 5px;
+    }
+    #icone_ihr {
+        left: 5px;
+    }
+    #icone {
+        left: 5px;
+    }
 }
